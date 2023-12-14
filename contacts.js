@@ -1,7 +1,7 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const nanoid = require('nanoid');
-require('colors');
+const nanoid = require('nanoid-esm');
+
 
 const contactPath = path.join(__dirname, './db/contacts.json')
 
@@ -12,10 +12,12 @@ const contactPath = path.join(__dirname, './db/contacts.json')
 
 async function listContacts () {
     try {
-        const contacts = await fs.readFile(contactPath);
-        return JSON.parse(contacts)
+        const data = await fs.readFile(contactPath, 'utf-8');
+        // console.log(JSON.parse(data))
+        return JSON.parse(data)
     } catch (error) {
-        console.log(error.message)
+        console.log(error.message);
+        return [];
     }
 }
 /**
@@ -24,18 +26,21 @@ async function listContacts () {
  * @returns {Promise<void>}
  */
 
-async function addContact (contactData){
+async function addContact (name, email, phone){
     try {
+        const contactData = {
+            name,
+            email,
+            phone,
+        }
         const newContact = {
             id: nanoid(),
             ...contactData
         }
-
         const contacts = await listContacts();
         contacts.push(newContact)
-        fs.writeFile(contactPath, JSON.stringify(contacts));
-        console.log(JSON.parse(fs.readFile(contactPath)))
-        // return newContact;
+        await fs.writeFile(contactPath, JSON.stringify(contacts, null, 2));
+        return newContact;
     } catch (error) {
         console.log(error.message)
     }
@@ -51,7 +56,7 @@ async function removeContact(contactId){
     try {
         const contacts = await listContacts();
         const filteredContacts = contacts.filter(contact => contact.id !== contactId);
-        fs.writeFile(contactPath, JSON.stringify(filteredContacts))
+        await fs.writeFile(contactPath, JSON.stringify(filteredContacts, null, 2))
         return contactId
     } catch (error) {
         console.log(error.message)
@@ -67,17 +72,18 @@ async function getContactById(contactId){
     try {
         const contacts = await listContacts()
         const searchedContact = contacts.filter(contact => contact.id === contactId);
-        return searchedContact;
+        console.log(searchedContact)
+        return searchedContact || null;
     } catch (error) {
         
     }
 }
 
-// module.exports = {
-//     listContacts,
-//     addContact,
-//     removeContact,
-//     getContactById,
-// }
+module.exports = {
+    listContacts,
+    addContact,
+    removeContact,
+    getContactById,
+}
 
-export {listContacts, addContact, removeContact,getContactById}
+// export {listContacts, addContact, removeContact,getContactById}
